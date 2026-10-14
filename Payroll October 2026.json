@@ -1,0 +1,784 @@
+{
+  "name": "Payroll October 2026",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7fe9de51-f8c9-4c6c-8233-0eab35d8ff0e",
+      "name": "Run Payroll",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw",
+          "cachedResultName": "october_calc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "employees"
+        },
+        "options": {}
+      },
+      "id": "adc3defe-fe97-4fb6-b429-3492fe638fb3",
+      "name": "Read Employees",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw",
+          "cachedResultName": "october_calc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "activity_oct"
+        },
+        "options": {}
+      },
+      "id": "fa5e84e0-1c50-4967-9d61-1e6b61e478f3",
+      "name": "Read Activity",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw",
+          "cachedResultName": "october_calc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "adjustments_oct"
+        },
+        "options": {}
+      },
+      "id": "b159f6e9-7ffb-4054-a66c-3a8fec202426",
+      "name": "Read Adjustments",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw",
+          "cachedResultName": "october_calc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "manual_payroll_oct"
+        },
+        "options": {}
+      },
+      "id": "e61500e6-2b2c-4a96-acdd-e37736f57ad7",
+      "name": "Read Manual Payroll",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect the four source tabs into one payload for the Apps Script engine.\n// All routing, validation, calculation and reconciliation happens in the\n// Apps Script Web App (Code.gs) so the rules live in exactly one place.\nconst tabData = (nodeName) => {\n  const proxy = $(nodeName);\n  const items = typeof proxy.all === 'function' ? proxy.all() : proxy.all;\n  return (items || []).map((item) => item.json);\n};\nreturn [{ json: {\n  employees: tabData('Read Employees'),\n  activity: tabData('Read Activity'),\n  adjustments: tabData('Read Adjustments'),\n  manual: tabData('Read Manual Payroll'),\n} }];"
+      },
+      "id": "2414a3c9-8d7e-430c-8e0a-77221154bb84",
+      "name": "Package Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycbythxk0dDjG0uMIuBLhLlLLniC2nxz5S-zCoRaeU0bwL-tvzAJtXYsySQjiUF1a-Ln3/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "id": "215e3a33-71f3-4d09-a9ff-d47690e22162",
+      "name": "Call Payroll Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw",
+          "cachedResultName": "october_calc"
+        },
+        "title": "payroll_oct_result",
+        "options": {}
+      },
+      "id": "34d3839b-c71b-4a2f-b57a-0dd992ca934d",
+      "name": "Ensure Result Tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1568,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read the engine response from the HTTP node (our direct input is the\n// sheet-create result of Ensure Result Tab, not the engine payload).\nconst payload = $('Call Payroll Engine').first().json;\nif (payload && payload.error) {\n  throw new Error('Payroll engine returned an error: ' + payload.error);\n}\nconst rows = (payload && payload.rows) || [];\nif (rows.length === 0) {\n  throw new Error('Payroll engine returned no rows');\n}\nreturn rows.map((row) => {\n  const clean = { ...row };\n  delete clean.reconciliation_code;\n  return { json: clean };\n});"
+      },
+      "id": "9606ffc5-f6ef-43c9-9dc6-55b235363fe9",
+      "name": "Extract Result Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "october_calc",
+          "mode": "id",
+          "value": "1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "payroll_oct_result"
+        }
+      },
+      "id": "b000cb8b-e5c3-48a8-96a6-00434cb3018a",
+      "name": "Clear Result Tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2016,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "cachedResultName": "october_calc",
+          "mode": "id",
+          "value": "1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "payroll_oct_result"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "schema": [
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "slack_user_id",
+              "id": "slack_user_id",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "employee_id",
+              "id": "employee_id",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "name",
+              "id": "name",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "contract_type",
+              "id": "contract_type",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "country",
+              "id": "country",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "payout_method",
+              "id": "payout_method",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "contract_currency",
+              "id": "contract_currency",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "rate",
+              "id": "rate",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "base_pay_ccy",
+              "id": "base_pay_ccy",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "adjustments_ccy",
+              "id": "adjustments_ccy",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "total_ccy",
+              "id": "total_ccy",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "fx_rate",
+              "id": "fx_rate",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "gross_usd",
+              "id": "gross_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "withholding_usd",
+              "id": "withholding_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "fee_charged_usd",
+              "id": "fee_charged_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "fee_deducted_usd",
+              "id": "fee_deducted_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "net_usd",
+              "id": "net_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "manual_gross_usd",
+              "id": "manual_gross_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "manual_net_usd",
+              "id": "manual_net_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "net_delta_usd",
+              "id": "net_delta_usd",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "matches_manual",
+              "id": "matches_manual",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "who_is_right",
+              "id": "who_is_right",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "reconciliation_reason",
+              "id": "reconciliation_reason",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "worked_days",
+              "id": "worked_days",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "month_working_days",
+              "id": "month_working_days",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "flags",
+              "id": "flags",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "status",
+              "id": "status",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {}
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "9c12dee1-e332-41d5-8713-495c790db377",
+      "name": "Append Result Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2240,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw?fields=sheets(properties(sheetId%2Ctitle)%2CconditionalFormats)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "58c40580-8fb1-4871-8e81-7c721a95ee67",
+      "name": "Read Format Rules",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2464,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a Sheets batchUpdate payload: borders for the used range + one\n// conditional-format rule painting matches_manual=TRUE rows light green.\n// Existing conditional rules on the tab are deleted first so re-runs never\n// accumulate duplicates.\nconst info = $input.first().json;\nconst sheets = info.sheets || [];\nconst target = sheets.find(function (s) {\n  return s.properties && s.properties.title === 'payroll_oct_result';\n});\nif (!target || !target.properties || target.properties.sheetId === undefined) {\n  throw new Error('payroll_oct_result tab not found; cannot apply formatting');\n}\nconst sheetId = target.properties.sheetId;\nconst existingRules = (target.conditionalFormats || []).length;\n\nconst extract = $('Extract Result Rows');\nconst items = typeof extract.all === 'function' ? extract.all() : extract.all;\nconst rowCount = 1 + (items || []).length; // header + data rows\nconst COLUMN_COUNT = 28; // A..AA, matches_manual is column U (21st)\n\nconst requests = [];\nfor (let i = 0; i < existingRules; i++) {\n  requests.push({ deleteConditionalFormatRule: { sheetId: sheetId, index: 0 } });\n}\nrequests.push({\n  repeatCell: {\n    range: {\n      sheetId: sheetId,\n      startRowIndex: 0,\n      endRowIndex: rowCount,\n      startColumnIndex: 0,\n      endColumnIndex: COLUMN_COUNT,\n    },\n    cell: {\n      userEnteredFormat: {\n        borders: {\n          top: { style: 'SOLID' },\n          bottom: { style: 'SOLID' },\n          left: { style: 'SOLID' },\n          right: { style: 'SOLID' },\n        },\n      },\n    },\n    fields: 'userEnteredFormat.borders',\n  },\n});\nrequests.push({\n  addConditionalFormatRule: {\n    rule: {\n      ranges: [{\n        sheetId: sheetId,\n        startRowIndex: 1,\n        endRowIndex: 1000,\n        startColumnIndex: 0,\n        endColumnIndex: COLUMN_COUNT,\n      }],\n      booleanRule: {\n        condition: { type: 'CUSTOM_FORMULA', values: [{ userEnteredValue: '=$V2=TRUE' }] },\n        format: {\n          backgroundColor: { red: 217 / 255, green: 234 / 255, blue: 211 / 255 },\n        },\n      },\n    },\n    index: 0,\n  },\n});\nreturn [{ json: { requests: requests } }];"
+      },
+      "id": "afc5a085-4135-46d0-bdaf-1b30a65ed421",
+      "name": "Build Format Requests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1uuJ3YXuO-FVg4KcJuMOBGz3qGf-VJETilU8wslpfdOw:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ requests: $json.requests }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "1f1e0b67-4bfd-43ca-b057-d4c13ad7f78a",
+      "name": "Apply Formatting",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2912,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ALlgpQ5nDrthQ1wP",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Run Payroll": {
+      "main": [
+        [
+          {
+            "node": "Read Employees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Employees": {
+      "main": [
+        [
+          {
+            "node": "Read Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Activity": {
+      "main": [
+        [
+          {
+            "node": "Read Adjustments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Adjustments": {
+      "main": [
+        [
+          {
+            "node": "Read Manual Payroll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Manual Payroll": {
+      "main": [
+        [
+          {
+            "node": "Package Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Package Payload": {
+      "main": [
+        [
+          {
+            "node": "Call Payroll Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Payroll Engine": {
+      "main": [
+        [
+          {
+            "node": "Ensure Result Tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure Result Tab": {
+      "main": [
+        [
+          {
+            "node": "Extract Result Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Result Rows": {
+      "main": [
+        [
+          {
+            "node": "Clear Result Tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Result Tab": {
+      "main": [
+        [
+          {
+            "node": "Append Result Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Result Rows": {
+      "main": [
+        [
+          {
+            "node": "Read Format Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Format Rules": {
+      "main": [
+        [
+          {
+            "node": "Build Format Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Format Requests": {
+      "main": [
+        [
+          {
+            "node": "Apply Formatting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "1a87a2b0-0b3a-4554-9425-4b2febef5fdc",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "5852e720bc7f48a1a7a590fa206fe0988026b628edd4c5620cd4cfe129654418"
+  },
+  "nodeGroups": [
+    {
+      "id": "4343327f-08ab-4197-85fb-a499856f1941",
+      "name": "Read source tabs",
+      "nodeIds": [
+        "adc3defe-fe97-4fb6-b429-3492fe638fb3",
+        "fa5e84e0-1c50-4967-9d61-1e6b61e478f3",
+        "b159f6e9-7ffb-4054-a66c-3a8fec202426",
+        "e61500e6-2b2c-4a96-acdd-e37736f57ad7"
+      ],
+      "description": "Reads the four source tabs from the october_calc spreadsheet"
+    },
+    {
+      "id": "4954cc74-8592-4e85-84ea-1a04656f0e53",
+      "name": "Write results",
+      "nodeIds": [
+        "34d3839b-c71b-4a2f-b57a-0dd992ca934d",
+        "9606ffc5-f6ef-43c9-9dc6-55b235363fe9",
+        "b000cb8b-e5c3-48a8-96a6-00434cb3018a",
+        "9c12dee1-e332-41d5-8713-495c790db377",
+        "58c40580-8fb1-4871-8e81-7c721a95ee67",
+        "afc5a085-4135-46d0-bdaf-1b30a65ed421",
+        "1f1e0b67-4bfd-43ca-b057-d4c13ad7f78a"
+      ],
+      "description": "Creates payroll_oct_result if missing and upserts engine rows by employee_id"
+    }
+  ],
+  "id": "835reuC226i46icu",
+  "tags": []
+}
